@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solicitare Factură Arbitraj</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Firebase App & Firestore SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <style>
+    /* Fundal roșu catifelat premium, adânc și serios */
+    body {
+      background: linear-gradient(135deg, #4a0e17 0%, #2b060b 100%);
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body class="text-slate-100 font-sans p-4 md:p-8">
+
+  <div class="max-w-2xl mx-auto bg-stone-900/90 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden border border-red-900/40">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-red-900 via-red-950 to-stone-900 text-white p-6 border-b border-red-800/50">
+      <h1 class="text-xl md:text-2xl font-bold tracking-wide">Solicitare Factură Arbitraj</h1>
+      <p class="text-red-200/80 text-sm mt-1">Completează datele tale și detaliile meciului pentru generarea facturii.</p>
+    </div>
+
+    <!-- Formular -->
+    <form id="invoiceForm" class="p-6 space-y-6">
+      
+      <!-- Date Arbitru -->
+      <div class="bg-stone-950/50 p-4 rounded-2xl border border-red-900/30 space-y-4">
+        <h2 class="text-xs font-bold text-red-400 uppercase tracking-widest">Date Arbitru</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-stone-300 mb-1">Nume și Prenume Arbitru</label>
+            <input type="text" id="numeArbitru" required placeholder="Popescu Ion" 
+                   class="w-full p-3 bg-stone-900 border border-stone-700 rounded-xl focus:ring-2 focus:ring-red-600 outline-none text-white placeholder-stone-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-stone-300 mb-1">Număr de Telefon</label>
+            <input type="tel" id="telefonArbitru" required placeholder="0712345678" 
+                   class="w-full p-3 bg-stone-900 border border-stone-700 rounded-xl focus:ring-2 focus:ring-red-600 outline-none text-white placeholder-stone-500">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-stone-300 mb-1">IBAN Arbitru</label>
+          <input type="text" id="ibanArbitru" required placeholder="RO00AAAA1111222233334444" 
+                 class="w-full p-3 bg-stone-900 border border-stone-700 rounded-xl focus:ring-2 focus:ring-red-600 outline-none text-white font-mono uppercase placeholder-stone-500">
+        </div>
+      </div>
+
+      <!-- Detalii Campionat & Meci -->
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-stone-300 mb-1">Campionat</label>
+          <input type="text" id="campionat" required placeholder="ex: Liga a IV-a Seniori" 
+                 class="w-full p-3 bg-stone-900 border border-stone-700 rounded-xl focus:ring-2 focus:ring-red-600 outline-none text-white placeholder-stone-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-stone-300 mb-1">Meci / Detalii (Echipă Gazdă vs Oaspete)</label>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="text" id="echipa1" required placeholder="Echipa 1" class="p-3 bg-stone-900 border border-stone-700 rounded-xl outline-none focus:ring-2 focus:ring-red-600 text-white placeholder-stone-500">
+            <input type="text" id="echipa2" required placeholder="Echipa 2" class="p-3 bg-stone-900 border border-stone-700 rounded-xl outline-none focus:ring-2 focus:ring-red-600 text-white placeholder-stone-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-stone-300 mb-1">Data meciului</label>
+          <input type="date" id="dataMeci" required class="w-full p-3 bg-stone-900 border border-stone-700 rounded-xl outline-none focus:ring-2 focus:ring-red-600 text-white">
+        </div>
+      </div>
+
+      <!-- Calitate prestare servicii -->
+      <div>
+        <label class="block text-xs font-semibold text-stone-300 mb-2">Prestare servicii arbitraj</label>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="flex items-center gap-2 p-3 bg-stone-900 border border-stone-700 rounded-xl cursor-pointer hover:border-red-600 transition">
+            <input type="radio" name="functie" value="Arbitru" checked class="w-4 h-4 text-red-600 accent-red-600">
+            <span class="font-medium text-sm">Arbitru</span>
+          </label>
+          <label class="flex items-center gap-2 p-3 bg-stone-900 border border-stone-700 rounded-xl cursor-pointer hover:border-red-600 transition">
+            <input type="radio" name="functie" value="Arbitru Asistent" class="w-4 h-4 text-red-600 accent-red-600">
+            <span class="font-medium text-sm">Arbitru Asistent</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Suma, CUI, Plata -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-stone-300 mb-1">Suma Totală (Lei)</label>
+          <input type="number" id="sumaTotala" required min="1" placeholder="0.00" step="0.01"
+                 class="w-full p-3 bg-stone-900 border border-stone-700 rounded-xl outline-none focus:ring-2 focus:ring-red-600 font-bold text-lg text-white placeholder-stone-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-stone-300 mb-1">CUI / CIF Firmă/Club</label>
+          <input type="text" id="cui" required placeholder="RO12345678" 
+                 class="w-full p-3 bg-stone-900 border border-stone-700 rounded-xl outline-none focus:ring-2 focus:ring-red-600 text-white placeholder-stone-500">
+        </div>
+      </div>
+
+      <!-- Optiuni Plata -->
+      <div>
+        <label class="block text-xs font-semibold text-stone-300 mb-2">Metodă de plată</label>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="flex flex-col p-3 bg-stone-900 border border-stone-700 rounded-xl cursor-pointer hover:border-red-600 transition">
+            <div class="flex items-center gap-2">
+              <input type="radio" name="metodaPlata" value="CASH" checked onchange="calculNet()" class="w-4 h-4 text-red-600 accent-red-600">
+              <span class="font-semibold text-sm text-stone-100">BANI CASH</span>
+            </div>
+            <span class="text-[11px] text-stone-400 mt-1">Factură + Chitanță PDF</span>
+          </label>
+
+          <label class="flex flex-col p-3 bg-stone-900 border border-stone-700 rounded-xl cursor-pointer hover:border-red-600 transition">
+            <div class="flex items-center gap-2">
+              <input type="radio" name="metodaPlata" value="BANK" onchange="calculNet()" class="w-4 h-4 text-red-600 accent-red-600">
+              <span class="font-semibold text-sm text-stone-100">TRANSFER BANCAR</span>
+            </div>
+            <span class="text-[11px] text-stone-400 mt-1">Doar Factură PDF</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Calcul Rapid Suma Netă -->
+      <div class="bg-red-950/40 border border-red-900/50 rounded-2xl p-4 flex justify-between items-center">
+        <div>
+          <span class="text-xs font-bold text-red-400 uppercase tracking-wider block">Calcul Rapid de primit:</span>
+          <span class="text-xs text-stone-400" id="formulaText">Formula: Sumă - 20% - 10 Lei</span>
+        </div>
+        <div class="text-right">
+          <span id="sumaNeta" class="text-2xl font-black text-red-200">0.00</span>
+          <span class="font-bold text-red-200">Lei</span>
+        </div>
+      </div>
+
+      <button type="submit" id="submitBtn" class="w-full bg-red-800 hover:bg-red-700 text-white font-bold py-4 rounded-xl shadow-lg transition tracking-wide">
+        Trimite Solicitarea
+      </button>
+    </form>
+
+    <!-- Istoric Cereri Trimise -->
+    <div class="p-6 bg-stone-950/60 border-t border-red-900/30">
+      <h3 class="font-bold text-stone-200 mb-3 text-sm uppercase tracking-wider">Istoric Facturi Solicitate</h3>
+      <div id="cereriList" class="space-y-3">
+        <p class="text-sm text-stone-500">Se încarcă istoricul...</p>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // AICI pui datele din proiectul tău de Firebase
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const sumaInput = document.getElementById('sumaTotala');
+    sumaInput.addEventListener('input', calculNet);
+
+    function calculNet() {
+      const suma = parseFloat(sumaInput.value) || 0;
+      const metoda = document.querySelector('input[name="metodaPlata"]:checked').value;
+      let net = 0;
+      
+      if (metoda === 'CASH') {
+        net = suma - (suma * 0.20) - 10;
+        document.getElementById('formulaText').innerText = "Formula: Sumă - 20% - 10 Lei (Factură + Chitanță)";
+      } else {
+        net = suma - (suma * 0.20) - 15;
+        document.getElementById('formulaText').innerText = "Formula: Sumă - 20% - 15 Lei (Doar Factură)";
+      }
+
+      document.getElementById('sumaNeta').innerText = net > 0 ? net.toFixed(2) : "0.00";
+    }
+
+    document.getElementById('numeArbitru').value = localStorage.getItem('numeArbitru') || '';
+    document.getElementById('telefonArbitru').value = localStorage.getItem('telefonArbitru') || '';
+    document.getElementById('ibanArbitru').value = localStorage.getItem('ibanArbitru') || '';
+
+    document.getElementById('invoiceForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const nume = document.getElementById('numeArbitru').value;
+      const telefon = document.getElementById('telefonArbitru').value;
+      const iban = document.getElementById('ibanArbitru').value;
+      
+      localStorage.setItem('numeArbitru', nume);
+      localStorage.setItem('telefonArbitru', telefon);
+      localStorage.setItem('ibanArbitru', iban);
+
+      const suma = parseFloat(document.getElementById('sumaTotala').value);
+      const metoda = document.querySelector('input[name="metodaPlata"]:checked').value;
+      const net = metoda === 'CASH' ? (suma - (suma * 0.20) - 10) : (suma - (suma * 0.20) - 15);
+
+      const cerere = {
+        numeArbitru: nume,
+        telefonArbitru: telefon,
+        ibanArbitru: iban,
+        campionat: document.getElementById('campionat').value,
+        echipa1: document.getElementById('echipa1').value,
+        echipa2: document.getElementById('echipa2').value,
+        dataMeci: document.getElementById('dataMeci').value,
+        functie: document.querySelector('input[name="functie"]:checked').value,
+        sumaTotala: suma,
+        sumaNeta: net,
+        cui: document.getElementById('cui').value,
+        metodaPlata: metoda,
+        necesitaChitanta: metoda === 'CASH',
+        status: 'In Procesare',
+        pdfUrl: null,
+        dataCreare: new Date().toISOString()
+      };
+
+      try {
+        await db.collection('facturi').add(cerere);
+        alert('Solicitarea a fost trimisă cu succes!');
+        
+        document.getElementById('campionat').value = '';
+        document.getElementById('echipa1').value = '';
+        document.getElementById('echipa2').value = '';
+        document.getElementById('dataMeci').value = '';
+        document.getElementById('sumaTotala').value = '';
+        document.getElementById('cui').value = '';
+        
+        calculNet();
+        incarcaCereri();
+      } catch (err) {
+        alert('Eroare la trimitere: ' + err.message);
+      }
+    });
+
+    function incarcaCereri() {
+      db.collection('facturi').orderBy('dataCreare', 'desc').limit(10).onSnapshot(snapshot => {
+        const container = document.getElementById('cereriList');
+        container.innerHTML = '';
+        
+        if (snapshot.empty) {
+          container.innerHTML = '<p class="text-sm text-stone-500">Nu ai nicio solicitare trimisă încă.</p>';
+          return;
+        }
+
+        snapshot.forEach(doc => {
+          const item = doc.data();
+          const esteFinalizata = item.status === 'Finalizata';
+          
+          const statusBadge = esteFinalizata ? 
+            `<span class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-800/50">
+               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Procesat
+             </span>` : 
+            `<span class="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-950 text-amber-300 border border-amber-800/50">
+               <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span> În procesare
+             </span>`;
+          
+          let pdfButton = '';
+          if (item.pdfUrl) {
+            pdfButton = `<a href="${item.pdfUrl}" target="_blank" class="inline-flex items-center gap-1 mt-2 text-xs font-bold bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg shadow transition">
+              📄 Descarcă PDF
+            </a>`;
+          }
+
+          container.innerHTML += `
+            <div class="p-4 bg-stone-900 border border-stone-800 rounded-xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div>
+                <p class="font-bold text-stone-100 text-sm">${item.campionat}: ${item.echipa1} vs ${item.echipa2}</p>
+                <p class="text-xs text-stone-400 mt-0.5">${item.numeArbitru} (${item.functie}) | Brut: ${item.sumaTotala} Lei | Net: <strong class="text-stone-200">${item.sumaNeta} Lei</strong></p>
+                <p class="text-xs font-mono text-stone-400 mt-0.5">IBAN: ${item.ibanArbitru || 'Nespecificat'}</p>
+                ${pdfButton}
+              </div>
+              <div>
+                ${statusBadge}
+              </div>
+            </div>
+          `;
+        });
+      });
+    }
+
+    incarcaCereri();
+  </script>
+</body>
+  </html>
+  
