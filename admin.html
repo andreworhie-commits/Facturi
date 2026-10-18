@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panou Administrator - Facturi Arbitri</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Firebase App & Firestore SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #2b060b 0%, #180306 100%);
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body class="text-slate-100 font-sans p-4 md:p-8">
+
+  <div class="max-w-5xl mx-auto bg-stone-900/90 backdrop-blur-md rounded-3xl shadow-2xl overflow-hidden border border-red-900/40">
+    
+    <!-- Header Admin -->
+    <div class="bg-gradient-to-r from-red-900 via-red-950 to-stone-900 text-white p-6 border-b border-red-800/50 flex justify-between items-center">
+      <div>
+        <h1 class="text-xl md:text-2xl font-bold tracking-wide">Panou Administrator - Facturi</h1>
+        <p class="text-red-200/80 text-xs mt-1">Gestiune solicitări și atașare facturi PDF</p>
+      </div>
+      <div id="statsCount" class="bg-red-950/80 border border-red-800/60 px-4 py-2 rounded-xl text-xs font-bold text-red-200">
+        Se încarcă...
+      </div>
+    </div>
+
+    <!-- Lista Cereri -->
+    <div class="p-6">
+      <div id="adminCereriList" class="space-y-4">
+        <p class="text-sm text-stone-500">Se încarcă cererile...</p>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // AICI LIPESTI CODUL TAU FIREBASE (Acelasi ca din index.html)
+    const firebaseConfig = {
+  apiKey: "AIzaSyAsFyTfrQBLzHyxKDnfPBcXP-P18DFCsjc",
+  authDomain: "facturi-a16a8.firebaseapp.com",
+  databaseURL: "https://facturi-a16a8-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "facturi-a16a8",
+  storageBucket: "facturi-a16a8.firebasestorage.app",
+  messagingSenderId: "503474417360",
+  appId: "1:503474417360:web:2d4113ec883067455938d5"
+};
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Incarcare si afisare cereri
+    function incarcaAdminCereri() {
+      db.collection('facturi').orderBy('dataCreare', 'desc').onSnapshot(snapshot => {
+        const container = document.getElementById('adminCereriList');
+        const stats = document.getElementById('statsCount');
+        container.innerHTML = '';
+
+        if (snapshot.empty) {
+          container.innerHTML = '<p class="text-sm text-stone-500 text-center py-8">Nu există nicio solicitare înregistrată.</p>';
+          stats.innerText = 'Total: 0';
+          return;
+        }
+
+        stats.innerText = `Total solicitări: ${snapshot.size}`;
+
+        snapshot.forEach(doc => {
+          const item = doc.data();
+          const docId = doc.id;
+          const esteFinalizata = item.status === 'Finalizata';
+
+          const statusBadge = esteFinalizata ? 
+            `<span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-950 text-emerald-300 border border-emerald-800/50">🟢 Finalizată</span>` : 
+            `<span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-950 text-amber-300 border border-amber-800/50">🟡 În Așteptare</span>`;
+
+          container.innerHTML += `
+            <div class="p-5 bg-stone-950/70 border border-stone-800 rounded-2xl shadow-md space-y-3">
+              <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-stone-800/80 pb-3">
+                <div>
+                  <h3 class="font-bold text-red-400 text-base">${item.campionat}: ${item.echipa1} vs ${item.echipa2}</h3>
+                  <p class="text-xs text-stone-400 mt-0.5">Data Meci: <strong>${item.dataMeci || 'Nespecificată'}</strong> | Data Solicitării: ${new Date(item.dataCreare).toLocaleString('ro-RO')}</p>
+                </div>
+                <div>${statusBadge}</div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs bg-stone-900/80 p-3 rounded-xl border border-stone-800">
+                <div>
+                  <span class="text-stone-500 block">Arbitru:</span>
+                  <span class="font-semibold text-stone-200">${item.numeArbitru} (${item.functie})</span>
+                  <span class="block text-stone-400 mt-0.5">Tel: ${item.telefonArbitru || 'Nespecificat'}</span>
+                </div>
+                <div>
+                  <span class="text-stone-500 block">Plată & Sume:</span>
+                  <span class="font-semibold text-stone-200">${item.metodaPlata} | Brut: ${item.sumaTotala} Lei</span>
+                  <span class="block text-red-300 font-bold mt-0.5">Net de plată: ${item.sumaNeta} Lei</span>
+                </div>
+                <div>
+                  <span class="text-stone-500 block">Date Fiscale:</span>
+                  <span class="font-semibold text-stone-200">CUI: ${item.cui}</span>
+                  <span class="block text-stone-400 font-mono mt-0.5">IBAN: ${item.ibanArbitru || 'Nespecificat'}</span>
+                </div>
+              </div>
+
+              <!-- Incărcare PDF -->
+              <div class="flex flex-col md:flex-row items-center justify-between gap-3 pt-2">
+                ${item.pdfUrl ? `
+                  <a href="${item.pdfUrl}" target="_blank" class="text-xs font-bold bg-stone-800 hover:bg-stone-700 text-red-300 px-3 py-2 rounded-xl border border-stone-700 flex items-center gap-1">
+                    📄 Vezi PDF Încărcat
+                  </a>
+                ` : `<span class="text-xs text-stone-500">Niciun PDF atașat încă</span>`}
+
+                <div class="flex items-center gap-2 w-full md:w-auto">
+                  <input type="file" id="file-${docId}" accept="application/pdf" class="text-xs text-stone-400 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-red-950 file:text-red-200 hover:file:bg-red-900 cursor-pointer">
+                  <button onclick="incarcaPdf('${docId}')" class="bg-red-800 hover:bg-red-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition shadow whitespace-nowrap">
+                    Atașează PDF & Finalizează
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+      });
+    }
+
+    // Conversie PDF in Base64 si salvare in Firestore
+    async function incarcaPdf(docId) {
+      const fileInput = document.getElementById(`file-${docId}`);
+      const file = fileInput.files[0];
+
+      if (!file) {
+        alert('Te rugăm să selectezi un fișier PDF mai întâi!');
+        return;
+      }
+
+      if (file.size > 800 * 1024) { // Limita ~800KB
+        alert('Fișierul este prea mare! Te rugăm să încarci un PDF de maxim 800KB.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const base64Pdf = e.target.result;
+
+        try {
+          await db.collection('facturi').doc(docId).update({
+            pdfUrl: base64Pdf,
+            status: 'Finalizata'
+          });
+          alert('Factura PDF a fost încărcată cu succes! Arbitrul o poate descărca acum.');
+        } catch (err) {
+          alert('Eroare la salvare: ' + err.message);
+        }
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+    incarcaAdminCereri();
+  </script>
+</body>
+</html>
